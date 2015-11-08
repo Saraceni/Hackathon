@@ -1,0 +1,174 @@
+<!DOCTYPE html >
+<html>
+
+<head>
+	<meta charset="utf-8"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="Scripts/jquery-2.1.4.js" language="javascript"></script>
+	<script src="Scripts/bootstrap-3.3.5-dist/js/bootstrap.js" language="javascript"></script>
+	<script src="Scripts/bootstrap3-typeahead.js" language="javascript"></script>
+	<title>tripsa</title>
+	<link rel="stylesheet" type="text/css" href="./Style/main_style.css" title="Standard" />
+	<link rel="stylesheet" type="text/css" href="./Scripts/bootstrap-3.3.5-dist/css/bootstrap-theme.css" title="Standard" />
+	<link rel="stylesheet" type="text/css" href="./Scripts/bootstrap-3.3.5-dist/css/bootstrap-theme.min.css" title="Standard" />
+	<link rel="stylesheet" type="text/css" href="./Scripts/bootstrap-3.3.5-dist/css/bootstrap.css" title="Standard" />
+	<link rel="stylesheet" type="text/css" href="./Scripts/bootstrap-3.3.5-dist/css/bootstrap.min.css" title="Standard" />
+
+	<script>
+
+		var envURL = "https://api.test.sabre.com/";
+		var getToken = function () 
+		{
+			configureTypeahead();
+
+		    $.ajax({
+		        contentType: "application/x-www-form-urlencoded",
+		        headers: { "Authorization": "Basic VmpFNmJURmlZV2RtT0hGcU5IcHJlREpwZGpwRVJWWkRSVTVVUlZJNlJWaFU6ZDNsalMwUTBOMVU9" },
+		        data: "grant_type=client_credentials",
+		        type: "POST",
+		        url: envURL + "v2/auth/token",//Token vale por uma semana v2.
+		        success: getTokenSuccess,
+		        dataType: "json",
+		        async: true
+			});
+		}
+
+		var getTokenSuccess = function (res) {
+            token = res.access_token;
+        }
+
+        var configureTypeahead = function()
+        {
+
+			$('#origin').typeahead({
+        		source: function (origin, process) {
+					var query = "query=" + origin + "&category=AIR";
+
+			        $.ajax({
+			            headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
+			            type: "GET",
+			            data: query,
+			            url: envURL + "v1/lists/utilities/geoservices/autocomplete",
+			            success: function(res){process(autocompleteOriginSuccess(res))},
+			            error: autocompleteOriginError
+			        });
+
+        		}
+            			
+        	});
+
+        	$('#destiny').typeahead({
+        		source: function (origin, process) {
+					var query = "query=" + origin + "&category=AIR";
+
+			        $.ajax({
+			            headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
+			            type: "GET",
+			            data: query,
+			            url: envURL + "v1/lists/utilities/geoservices/autocomplete",
+			            success: function(res){process(autocompleteOriginSuccess(res))},
+			            error: autocompleteOriginError
+			        });
+
+        		}
+            			
+        	});
+
+        }
+
+        var autocompleteOriginSuccess = function(res){
+        	var retArray = [];
+        	if(res){
+        		var array = res.Response.grouped["category:AIR"].doclist.docs;
+        		if(!res.Response.grouped["category:AIR"] || array.length == 0)
+        		{
+        			return null;
+        		}
+        		for(var i = 0; i < array.length; i++)
+        		{
+        			var airpt = array[i].id;
+        			var name = array[i].name;
+        			retArray.push(airpt+"-"+name);        		
+        		}
+        	}
+        	return retArray;
+        }
+
+        var autocompleteOriginError = function(e)
+        {
+
+        } 
+
+	</script>
+
+</head>
+
+<body onload="getToken()">
+	<div id="inputBlock">
+		<input id="origin" type="text" data-provide="typeahead" placeholder="origem" >
+		<input id="destiny" type="text" data-provide="typeahead" placeholder="destino">
+		<select class="first" margin-left="5%">
+			<option selected disabled>Adulto</option>
+			<option value="0">0</option>
+	  		<option value="1">1</option>
+	  		<option value="2">2</option>
+	  		<option value="3">3</option>
+	  		<option value="4">4</option>
+	  		<option value="5">5</option>
+	  		<option value="6">6</option>
+	  		<option value="7">7</option>
+		</select>
+		<select>
+			<option selected disabled>Crianca</option>
+			<option value="0">0</option>
+	  		<option value="1">1</option>
+	  		<option value="2">2</option>
+	  		<option value="3">3</option>
+	  		<option value="4">4</option>
+	  		<option value="5">5</option>
+	  		<option value="6">6</option>
+	  		<option value="7">7</option>
+		</select>
+		<select>
+			<option selected disabled>Infantil</option>
+			<option value="0">0</option>
+	  		<option value="1">1</option>
+	  		<option value="2">2</option>
+	  		<option value="3">3</option>
+	  		<option value="4">4</option>
+	  		<option value="5">5</option>
+	  		<option value="6">6</option>
+	  		<option value="7">7</option>
+		</select>
+		<div id="datePickBlock">
+			<input class ="date" type="date">
+			<label class="date">Ida</label>
+			<input class ="date" type="date">
+			<label class="date">Volta</label>
+		</div>
+		 <div id="results">
+		 	<table>
+		 		<thead>
+                    <tr>
+	                    <th>
+	                        Departing Date
+	                    </th>
+	                    <th>
+	                        Return Date
+	                    </th>
+	                    <th>
+	                        Destination
+	                    </th>
+	                    <th>
+	                        Fare
+	                    </th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+		 	</table>
+		 </div>
+	</div>
+</body>
+
+</html>
